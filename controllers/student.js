@@ -2,7 +2,6 @@ const Student = require("../models/student");
 const joi = require("@hapi/joi");
 
 exports.createStudent = (req, res, next) => {
-    const url = req.protocol + "://" + req.get("host");
     const student = new Student({
         name: req.body.name,
         age: req.body.age,
