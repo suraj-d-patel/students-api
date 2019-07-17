@@ -1,5 +1,5 @@
 const Student = require("../models/student");
-const joi = require("@hapi/joi");
+const Joi = require("@hapi/joi");
 
 exports.createStudent = (req, res, next) => {
     const student = new Student({
@@ -11,6 +11,13 @@ exports.createStudent = (req, res, next) => {
         subjects: req.body.subjects
     });
 
+    const { error } = validateCreateStudent(req.body);
+    if (error) return res.status(200).send({
+        success: false,
+        msg: null,
+        err: error.message
+    });
+    console.log('joi success in Create Student :::: ');
     student.save().then(createdStudent => {
         res.status(201).json({
             message: "Student added successfully",
@@ -28,11 +35,10 @@ exports.createStudent = (req, res, next) => {
 };
 
 exports.searchStudent = (req, res, next) => {
-    Student.find({
-            name: {
-                $regex: req.body.search_student
-            }
-        }).then(createdStudent => {
+    req.body.search_student
+
+    Student.find({ name: { $regex: req.body.search_student } })
+        .then(createdStudent => {
             const returned_student_array = [...createdStudent];
             if (returned_student_array.length > 0) {
                 res.status(201).json({
@@ -45,8 +51,7 @@ exports.searchStudent = (req, res, next) => {
                     student: returned_student_array
                 });
             }
-        })
-        .catch(error => {
+        }).catch(error => {
             res.status(500).json({
                 message: "An error Occured!",
                 error: error
@@ -55,12 +60,18 @@ exports.searchStudent = (req, res, next) => {
 };
 
 exports.updateStudent = (req, res, next) => {
-    const student = {
-        name: req.body.name
-    };
-    Student.updateOne({
-            _id: req.params.id
-        }, student)
+    const student = { name: req.body.name };
+    
+    const { error } = Joi.validate(req.body, {name: Joi.string().min(3).max(50).required().label('Please enter Name of Student within 3 to 50 Characters.')}, { abortEarly: false });
+    if (error) return res.status(200).send({
+        success: false,
+        msg: null,
+        err: error.message
+    });
+    
+    console.log('joi success in Update Student :::: ');
+
+    Student.updateOne({ _id: req.params.id }, student)
         .then(result => {
             if (result.n > 0) {
                 res.status(200).json({
@@ -120,8 +131,8 @@ exports.getAllStudent = (req, res, next) => {
 
 exports.deleteStudent = (req, res, next) => {
     Student.deleteOne({
-            _id: req.params.id
-        })
+        _id: req.params.id
+    })
         .then(result => {
             if (result.n > 0) {
                 res.status(200).json({
@@ -140,3 +151,15 @@ exports.deleteStudent = (req, res, next) => {
             });
         });
 };
+
+function validateCreateStudent(student_object) {
+    const schema = {
+        name: Joi.string().min(3).max(50).required().label('Please enter Name of Student within 3 to 50 Characters.'),
+        age: Joi.number().min(1).max(50).required().label('Please enter valid Age of Student'),
+        class: Joi.number().min(1).max(12).required().label('Please enter valid Class'),
+        mobile_no: Joi.number().min(1000000000).max(9999999999).required().label('Please enter valid Mobile Number'),
+        roll_no: Joi.number().min(1).max(1000).required().label('Roll Number is Invalid'),
+        subjects: Joi.array().label("Please enter Subjects in valid format")
+    };
+    return Joi.validate(student_object, schema, { abortEarly: false });
+}
