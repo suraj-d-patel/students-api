@@ -6,7 +6,7 @@
     "start": "nodemon server.js"
   },
   "dependencies": {
-    "@hapi/joi": "^15.1.0",
+    "@hapi/joi": "^15.1.1",
     "body-parser": "^1.18.3",
     "express": "^4.17.1",
     "mongoose": "^5.4.0",
